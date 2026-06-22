@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Management</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="admin">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-block">
+        <div class="brand-mark">
+          <img src="Muriya - sign off_Plan de travail 1.png" alt="Muriya logo" class="brand-logo">
+        </div>
+        <div>
+          <p class="eyebrow">Platform Management</p>
+          <h1>Muriya Weekly Hub</h1>
+        </div>
+      </div>
+
+      <nav class="nav-list">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="submit.html" class="nav-link">Submit Update</a>
+        <a href="executive.html" class="nav-link">Exec Dashboard</a>
+        <a href="admin.html" class="nav-link js-admin-nav active">Admin</a>
+      </nav>
+
+      <div class="sidebar-card">
+        <p class="sidebar-label js-current-user">Current User</p>
+        <p class="sidebar-meta js-current-role">Role</p>
+        <p class="sidebar-meta js-current-dept">Department</p>
+        <p class="sidebar-meta js-current-email">Email</p>
+        <button type="button" class="button button-secondary sidebar-logout js-logout">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Admin Workspace</p>
+          <h2>User and department management</h2>
+        </div>
+        <div class="status-pill">Admin access only</div>
+      </header>
+
+      <section id="adminAccessNotice" class="panel hidden-panel">
+        <div class="empty-state">
+          This page is restricted to admin users.
+        </div>
+      </section>
+
+      <section id="adminContent" class="section-grid admin-layout">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Overview</p>
+              <h3>Admin Summary</h3>
+            </div>
+          </div>
+          <div id="adminStatCards" class="card-grid compact"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Create User</p>
+              <h3>Add Admin, Executive, Or Department Head</h3>
+            </div>
+          </div>
+
+          <form id="adminCreateUserForm" class="form-stack">
+            <div class="form-grid">
+              <label class="field">
+                <span>Full Name</span>
+                <input id="adminFullName" type="text" class="input-field" required>
+              </label>
+              <label class="field">
+                <span>Email</span>
+                <input id="adminEmail" type="email" class="input-field" required>
+              </label>
+              <label class="field">
+                <span>Temporary Password</span>
+                <input id="adminPassword" type="text" class="input-field" placeholder="Temp@12345" required>
+              </label>
+              <label class="field">
+                <span>Role</span>
+                <select id="adminRole" class="input-field" required>
+                  <option value="Admin">Admin</option>
+                  <option value="Executive">Executive</option>
+                  <option value="Department Head">Department Head</option>
+                </select>
+              </label>
+              <label class="field">
+                <span>Department</span>
+                <select id="adminDepartment" class="input-field" required></select>
+              </label>
+            </div>
+
+            <div class="form-actions">
+              <button type="submit" class="button">Create User</button>
+              <p id="adminCreateFeedback" class="helper-text"></p>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">User Roster</p>
+              <h3>Current Admins, Executives, And Department Heads</h3>
+            </div>
+          </div>
+          <div id="adminUserList" class="stack-list"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Departments</p>
+              <h3>Department Directory</h3>
+            </div>
+          </div>
+          <div id="adminDepartmentList" class="stack-list"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-service.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

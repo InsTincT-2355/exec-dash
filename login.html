@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Muriya Weekly Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="login" class="auth-body">
+  <main class="auth-shell">
+    <section class="auth-showcase">
+      <img src="bannermuriya.jpg" alt="Muriya waterfront view" class="auth-banner">
+      <div class="auth-overlay"></div>
+      <div class="auth-copy">
+        <div class="brand-block auth-brand">
+          <div class="brand-mark">
+            <img src="Muriya - sign off_Plan de travail 1.png" alt="Muriya logo" class="brand-logo">
+          </div>
+          <div>
+            <p class="eyebrow light">Executive Reporting</p>
+            <h1>Muriya Weekly Hub</h1>
+          </div>
+        </div>
+        <h2>One place for weekly department updates, executive visibility, and faster memo preparation.</h2>
+        <p>
+          Department heads submit activities, next-week priorities, and active risks every Thursday. Executives review,
+          filter, and generate concise memos from selected tasks.
+        </p>
+      </div>
+    </section>
+
+    <section class="auth-panel">
+      <div class="auth-panel-inner">
+        <div class="auth-header">
+          <p class="eyebrow">Secure Access</p>
+          <h2>Sign in to continue</h2>
+          <p class="helper-text">Use your company email and password to access the dashboard.</p>
+        </div>
+
+        <form id="loginForm" class="form-stack auth-form">
+          <label class="field">
+            <span>Email</span>
+            <input id="loginEmail" type="email" class="input-field" placeholder="name@company.com" required>
+          </label>
+
+          <label class="field">
+            <span>Password</span>
+            <input id="loginPassword" type="password" class="input-field" placeholder="Enter your password" required>
+          </label>
+
+          <button type="submit" class="button">Log In</button>
+          <p id="loginFeedback" class="helper-text"></p>
+        </form>
+
+
+      </div>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-service.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Muriya Executive Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="home">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-block">
+        <div class="brand-mark">
+          <img src="Muriya - sign off_Plan de travail 1.png" alt="Muriya logo" class="brand-logo">
+        </div>
+        <div>
+          <p class="eyebrow">Executive Office</p>
+          <h1>Muriya Weekly Hub</h1>
+        </div>
+      </div>
+
+      <nav class="nav-list">
+        <a href="index.html" class="nav-link active">Home</a>
+        <a href="submit.html" class="nav-link">Submit Update</a>
+        <a href="executive.html" class="nav-link">Exec Dashboard</a>
+        <a href="admin.html" class="nav-link js-admin-nav">Admin</a>
+      </nav>
+
+      <div class="sidebar-card">
+        <p class="sidebar-label js-current-user">Current User</p>
+        <p class="sidebar-meta js-current-role">Role</p>
+        <p class="sidebar-meta js-current-dept">Department</p>
+        <p class="sidebar-meta js-current-email">Email</p>
+        <button type="button" class="button button-secondary sidebar-logout js-logout">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Weekly Executive Reporting</p>
+          <h2>Welcome back, <span class="js-current-user">User</span></h2>
+        </div>
+        <div class="topbar-actions">
+          <a href="submit.html" class="button button-secondary">Submit Weekly Update</a>
+          <a href="executive.html" class="button">Open Exec Workspace</a>
+        </div>
+      </header>
+
+      <section class="hero-card">
+        <div class="hero-overlay"></div>
+        <img src="bannermuriya.jpg" alt="Muriya banner" class="hero-banner">
+        <div class="hero-content">
+          <p class="eyebrow light">Thursday Snapshot</p>
+          <h3>Clear weekly reporting for every department and faster executive decision-making.</h3>
+          <p class="hero-copy">
+            Track activities, next-week priorities, and current risks in one shared dashboard with AI-ready memo generation.
+          </p>
+        </div>
+      </section>
+
+      <section class="section-grid two-column">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Overview</p>
+              <h3>Dashboard Summary</h3>
+            </div>
+          </div>
+          <div id="summaryCards" class="card-grid"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Insights</p>
+              <h3>Performance Highlights</h3>
+            </div>
+          </div>
+          <div id="insightPanel" class="stack-list"></div>
+        </div>
+      </section>
+
+      <section class="section-grid two-column">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Distribution</p>
+              <h3>Department Activity Snapshot</h3>
+            </div>
+          </div>
+          <div id="barChart" class="bar-chart"></div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Latest</p>
+              <h3>Recent Weekly Updates</h3>
+            </div>
+          </div>
+          <div id="recentItems" class="stack-list"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-service.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

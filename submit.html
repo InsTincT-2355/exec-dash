@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Submit Weekly Update</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="submit">
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-block">
+        <div class="brand-mark">
+          <img src="Muriya - sign off_Plan de travail 1.png" alt="Muriya logo" class="brand-logo">
+        </div>
+        <div>
+          <p class="eyebrow">Executive Office</p>
+          <h1>Muriya Weekly Hub</h1>
+        </div>
+      </div>
+
+      <nav class="nav-list">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="submit.html" class="nav-link active">Submit Update</a>
+        <a href="executive.html" class="nav-link">Exec Dashboard</a>
+        <a href="admin.html" class="nav-link js-admin-nav">Admin</a>
+      </nav>
+
+      <div class="sidebar-card">
+        <p class="sidebar-label js-current-user">Current User</p>
+        <p class="sidebar-meta js-current-role">Role</p>
+        <p class="sidebar-meta js-current-dept">Department</p>
+        <p class="sidebar-meta js-current-email">Email</p>
+        <button type="button" class="button button-secondary sidebar-logout js-logout">Log Out</button>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Weekly Update Submission</p>
+          <h2>Department reporting made simple</h2>
+        </div>
+        <div class="status-pill">Submit before Thursday executive review</div>
+      </header>
+
+      <section class="section-grid submit-layout">
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Form</p>
+              <h3>Submit Your Weekly Update</h3>
+            </div>
+          </div>
+
+          <form id="weeklyUpdateForm" class="form-stack">
+            <div class="form-grid">
+              <label class="field">
+                <span>Department Head</span>
+                <input id="headName" type="text" class="input-field" readonly>
+              </label>
+              <label class="field">
+                <span>Department</span>
+                <input id="departmentName" type="text" class="input-field" readonly>
+              </label>
+              <label class="field">
+                <span>Week Ending</span>
+                <input id="weekEnding" type="date" class="input-field" required>
+              </label>
+            </div>
+
+            <section class="task-section">
+              <div class="section-head-inline">
+                <div>
+                  <p class="eyebrow">Category 1</p>
+                  <h4>Activities And Updates</h4>
+                </div>
+                <button type="button" class="button button-secondary add-item-button" data-category="activities">Add Activity</button>
+              </div>
+              <div id="activitiesContainer" class="task-list"></div>
+            </section>
+
+            <section class="task-section">
+              <div class="section-head-inline">
+                <div>
+                  <p class="eyebrow">Category 2</p>
+                  <h4>Next Week Priorities</h4>
+                </div>
+                <button type="button" class="button button-secondary add-item-button" data-category="priorities">Add Priority</button>
+              </div>
+              <div id="prioritiesContainer" class="task-list"></div>
+            </section>
+
+            <section class="task-section">
+              <div class="section-head-inline">
+                <div>
+                  <p class="eyebrow">Category 3</p>
+                  <h4>Challenges And Risks</h4>
+                </div>
+                <button type="button" class="button button-secondary add-item-button" data-category="risks">Add Risk</button>
+              </div>
+              <div id="risksContainer" class="task-list"></div>
+            </section>
+
+            <div class="form-actions">
+              <button type="submit" class="button">Submit Weekly Update</button>
+              <p id="formFeedback" class="helper-text"></p>
+            </div>
+          </form>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div>
+              <p class="eyebrow">Preview</p>
+              <h3>Your Recent Submissions</h3>
+            </div>
+          </div>
+          <div id="submissionHistory" class="stack-list"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase-service.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
