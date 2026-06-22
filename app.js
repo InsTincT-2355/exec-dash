@@ -1252,7 +1252,7 @@ function renderExecutivePage(state) {
     privacyModeLabel.textContent = "Local Ollama model configured";
   } else {
     privacyModeLabel.textContent = getConfig().memoEndpoint && getConfig().aiMode !== "demo"
-      ? "Private Vercel memo endpoint configured"
+      ? "Private hosted memo endpoint configured"
       : "Built-in fallback summarizer active";
   }
 
@@ -1484,7 +1484,7 @@ function renderAdminPage(state) {
     const accessToken = appUsesSupabase() ? await window.SupabaseService.getAccessToken() : "";
 
     if (!endpoint) {
-      createFeedback.textContent = "Admin user creation endpoint is not configured. Set `adminUserEndpoint` in `config.js` or deploy the `api/admin-users` route on Vercel.";
+      createFeedback.textContent = "Admin user creation endpoint is not configured. Set `adminUserEndpoint` in `config.js` and deploy the `/functions/api/admin-users` route.";
       return;
     }
 

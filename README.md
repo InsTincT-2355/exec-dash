@@ -1,6 +1,6 @@
 # Muriya Weekly Hub
 
-Responsive executive dashboard built in plain HTML, CSS, and JavaScript with Supabase for auth and data, plus Vercel serverless APIs for hosted memo generation and admin user creation.
+Responsive executive dashboard built in plain HTML, CSS, and JavaScript with Supabase for auth and data, plus Cloudflare Pages + Pages Functions for hosted memo generation and admin user creation.
 
 ## Pages
 
@@ -18,8 +18,8 @@ Responsive executive dashboard built in plain HTML, CSS, and JavaScript with Sup
 - Executive task review grouped strictly by category order: activities, priorities, risks
 - Week, department, and category filtering for executive review
 - Multi-select memo generation from chosen tasks only
-- Hosted Gemini-ready memo endpoint on Vercel
-- Admin-only hosted user creation endpoint on Vercel
+- Hosted Gemini-ready memo endpoint on Cloudflare Pages Functions
+- Admin-only hosted user creation endpoint on Cloudflare Pages Functions
 - Supabase-backed auth, profiles, departments, weekly updates, and update items
 - Built-in deterministic fallback memo if no AI key is configured
 
@@ -42,9 +42,9 @@ window.APP_CONFIG = {
 That means:
 
 - the browser talks to Supabase directly for app data
-- the executive memo button calls `api/generate-memo.js`
-- the admin create-user form calls `api/admin-users.js`
-- Vercel environment variables provide the secure service keys and Gemini key
+- the executive memo button calls `functions/api/generate-memo.js`
+- the admin create-user form calls `functions/api/admin-users.js`
+- Cloudflare environment variables provide the secure service keys and Gemini key
 
 ## Supabase Setup
 
@@ -76,9 +76,9 @@ These values are case-sensitive and must match exactly.
 - `Department Head` can submit updates and view their own dashboard data
 - Admin page access is restricted to `Admin`
 
-## Vercel Environment Variables
+## Cloudflare Environment Variables
 
-Create these in Vercel Project Settings > Environment Variables:
+Create these in Cloudflare Pages Project > Settings > Environment Variables (and Secrets where appropriate):
 
 - `SUPABASE_URL`
 - `SUPABASE_ANON_KEY`
@@ -89,20 +89,23 @@ Create these in Vercel Project Settings > Environment Variables:
 
 You can start from `.env.example`.
 
-## GitHub To Vercel
+## GitHub To Cloudflare Pages
 
 1. Push this project to a GitHub repository.
-2. Log in to Vercel and click `Add New > Project`.
-3. Import the GitHub repository.
-4. Add the environment variables from `.env.example`.
-5. Deploy.
-6. After deployment, open the site and test:
+2. In Cloudflare Dashboard > Workers & Pages > Pages, create a new Pages project.
+3. Connect GitHub and select the repository.
+4. Framework preset: none (static)
+5. Build command: none
+6. Output directory: `/`
+7. Add the environment variables from `.env.example`.
+8. Deploy.
+9. After deployment, open the site and test:
    - login
    - weekly submission
    - executive memo generation
    - admin user creation
 
-`vercel.json` already rewrites `/` to `login.html`, so the deployment opens on the login page.
+`_redirects` already redirects `/` to `login.html`, so the deployment opens on the login page.
 
 ## Local Preview
 
@@ -114,7 +117,7 @@ npx.cmd http-server . -p 4173
 
 Then open [http://localhost:4173/login.html](http://localhost:4173/login.html).
 
-Note: local preview will load the HTML app, but the Vercel serverless routes are only available after deployment unless you run them through Vercel dev tooling.
+Note: local preview will load the HTML app, but the Cloudflare Functions routes are only available after deployment unless you run a local Pages Functions dev server.
 
 ## Hosted Memo Behavior
 
