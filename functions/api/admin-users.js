@@ -6,7 +6,7 @@ import {
   parseJsonBody,
   sendJson,
   supabaseFetch
-} from "../_utils";
+} from "../_utils.js";
 
 async function deleteAuthUser(env, authUserId) {
   try {

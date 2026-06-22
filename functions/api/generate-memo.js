@@ -4,7 +4,7 @@ import {
   getRequesterProfile,
   parseJsonBody,
   sendJson
-} from "../_utils";
+} from "../_utils.js";
 
 function formatMemoList(items, emptyText) {
   if (!items.length) {
