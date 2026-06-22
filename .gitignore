@@ -1,8 +1,10 @@
 .env
 .env.local
 .env.*.local
+.dev.vars
 node_modules/
 .vercel/
+.wrangler/
 dist/
 coverage/
 *.log

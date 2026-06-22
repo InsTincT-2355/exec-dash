@@ -109,7 +109,11 @@ You can start from `.env.example`.
 
 ## Local Preview
 
-To preview locally before pushing to GitHub, run a static server from the project folder. On Windows, a simple option is:
+There are two local modes:
+
+1) Static preview (UI only, no Functions)
+
+To preview locally before pushing to GitHub, run a static server from the project folder. On Windows:
 
 ```powershell
 npx.cmd http-server . -p 4173
@@ -117,7 +121,31 @@ npx.cmd http-server . -p 4173
 
 Then open [http://localhost:4173/login.html](http://localhost:4173/login.html).
 
-Note: local preview will load the HTML app, but the Cloudflare Functions routes are only available after deployment unless you run a local Pages Functions dev server.
+2) Full local preview (UI + Cloudflare Pages Functions + Gemini)
+
+This runs the Pages Functions locally so you can test Gemini memo generation before deploying.
+
+1. Install Node.js (LTS).
+2. Install dev tooling:
+
+```powershell
+npm.cmd install
+```
+
+3. Create a local secrets file:
+
+- copy `.dev.vars.example` to `.dev.vars`
+- fill in `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, and `GEMINI_API_KEY`
+
+4. Start the local Pages dev server:
+
+```powershell
+npm.cmd run dev:cf
+```
+
+Then open [http://localhost:4173/login.html](http://localhost:4173/login.html).
+
+Gemini runs only server-side (inside the Pages Function). Do not put `GEMINI_API_KEY` in `config.js`.
 
 ## Hosted Memo Behavior
 
