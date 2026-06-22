@@ -1,10 +1,10 @@
-const {
+import {
   assertExecutive,
   getCorsHeaders,
   getRequesterProfile,
   parseJsonBody,
   sendJson
-} = require("../_utils");
+} from "../_utils";
 
 function formatMemoList(items, emptyText) {
   if (!items.length) {
@@ -184,37 +184,34 @@ async function callAiProvider(env, tasks, requesterName) {
   );
 }
 
-module.exports = {
-  onRequest: async (context) => {
-    const { request, env } = context;
-    const corsHeaders = getCorsHeaders(request);
+export const onRequest = async (context) => {
+  const { request, env } = context;
+  const corsHeaders = getCorsHeaders(request);
 
-    if (request.method === "OPTIONS") {
-      return sendJson(204, {}, corsHeaders);
+  if (request.method === "OPTIONS") {
+    return sendJson(204, {}, corsHeaders);
+  }
+
+  if (request.method !== "POST") {
+    return sendJson(405, { error: "Method not allowed." }, corsHeaders);
+  }
+
+  try {
+    const { profile } = await getRequesterProfile(request, env);
+    assertExecutive(profile);
+
+    const body = await parseJsonBody(request);
+    const tasks = Array.isArray(body.tasks) ? body.tasks : [];
+    if (!tasks.length) {
+      return sendJson(400, { error: "At least one task is required to generate a memo." }, corsHeaders);
     }
 
-    if (request.method !== "POST") {
-      return sendJson(405, { error: "Method not allowed." }, corsHeaders);
-    }
-
-    try {
-      const { profile } = await getRequesterProfile(request, env);
-      assertExecutive(profile);
-
-      const body = await parseJsonBody(request);
-      const tasks = Array.isArray(body.tasks) ? body.tasks : [];
-      if (!tasks.length) {
-        return sendJson(400, { error: "At least one task is required to generate a memo." }, corsHeaders);
-      }
-
-      const memo = await callAiProvider(env, tasks, profile.full_name);
-      return sendJson(200, {
-        memo,
-        mode: (env?.AI_API_KEY || env?.GEMINI_API_KEY) ? "ai-provider" : "fallback"
-      }, corsHeaders);
-    } catch (error) {
-      return sendJson(500, { error: error?.message || "Memo generation failed." }, corsHeaders);
-    }
+    const memo = await callAiProvider(env, tasks, profile.full_name);
+    return sendJson(200, {
+      memo,
+      mode: (env?.AI_API_KEY || env?.GEMINI_API_KEY) ? "ai-provider" : "fallback"
+    }, corsHeaders);
+  } catch (error) {
+    return sendJson(500, { error: error?.message || "Memo generation failed." }, corsHeaders);
   }
 };
-

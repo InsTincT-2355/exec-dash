@@ -1,6 +1,6 @@
-const VALID_ROLES = new Set(["Admin", "Executive", "Department Head"]);
+export const VALID_ROLES = new Set(["Admin", "Executive", "Department Head"]);
 
-function sendJson(status, payload, extraHeaders = {}) {
+export function sendJson(status, payload, extraHeaders = {}) {
   return new Response(JSON.stringify(payload), {
     status,
     headers: {
@@ -37,7 +37,7 @@ function getSupabaseServiceRoleKey(env) {
   return String(key);
 }
 
-function getCorsHeaders(request) {
+export function getCorsHeaders(request) {
   const origin = request.headers.get("Origin") || "*";
   return {
     "Access-Control-Allow-Origin": origin,
@@ -46,7 +46,7 @@ function getCorsHeaders(request) {
   };
 }
 
-async function parseJsonBody(request) {
+export async function parseJsonBody(request) {
   if (!request.body) {
     return {};
   }
@@ -54,7 +54,7 @@ async function parseJsonBody(request) {
   return await request.json();
 }
 
-async function supabaseFetch(env, path, options = {}) {
+export async function supabaseFetch(env, path, options = {}) {
   const baseUrl = getSupabaseProjectUrl(env);
   const serviceRoleKey = getSupabaseServiceRoleKey(env);
 
@@ -85,7 +85,7 @@ async function supabaseFetch(env, path, options = {}) {
   return data;
 }
 
-async function getRequesterProfile(request, env) {
+export async function getRequesterProfile(request, env) {
   const accessToken = getBearerToken(request);
   if (!accessToken) {
     throw new Error("Missing access token.");
@@ -119,26 +119,14 @@ async function getRequesterProfile(request, env) {
   return { user: userPayload, profile };
 }
 
-function assertExecutive(profile) {
+export function assertExecutive(profile) {
   if (profile.role !== "Executive") {
     throw new Error("This action is restricted to executive users.");
   }
 }
 
-function assertAdmin(profile) {
+export function assertAdmin(profile) {
   if (profile.role !== "Admin") {
     throw new Error("This action is restricted to admin users.");
   }
 }
-
-module.exports = {
-  VALID_ROLES,
-  assertAdmin,
-  assertExecutive,
-  getCorsHeaders,
-  getRequesterProfile,
-  parseJsonBody,
-  sendJson,
-  supabaseFetch
-};
-
