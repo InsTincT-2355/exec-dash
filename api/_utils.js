@@ -71,7 +71,22 @@ async function supabaseFetch(path, options = {}) {
   }
 
   if (!response.ok) {
-    throw new Error(typeof data === "object" && data?.msg ? data.msg : `Supabase request failed: ${response.status}`);
+    if (typeof data === "object" && data) {
+      const detailParts = [];
+      const message = data.msg || data.message || data.error_description || data.error;
+      const details = data.details || data.detail;
+      const hint = data.hint;
+      const code = data.code;
+
+      if (message) detailParts.push(String(message));
+      if (details) detailParts.push(String(details));
+      if (hint) detailParts.push(`hint: ${hint}`);
+      if (code) detailParts.push(`code: ${code}`);
+
+      throw new Error(`Supabase request failed (${response.status}) for ${path}${detailParts.length ? `: ${detailParts.join(" | ")}` : ""}`);
+    }
+
+    throw new Error(`Supabase request failed (${response.status}) for ${path}${data ? `: ${String(data)}` : ""}`);
   }
 
   return data;

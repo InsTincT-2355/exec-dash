@@ -102,10 +102,14 @@
       .from("profiles")
       .select("id, auth_user_id, full_name, email, role, departments(name)")
       .eq("auth_user_id", session.user.id)
-      .single();
+      .maybeSingle();
 
     if (error) {
       throw error;
+    }
+
+    if (!data) {
+      throw new Error("No profile row exists for this account. Create the user profile from the Admin page or verify the profile insert succeeded.");
     }
 
     return data;
@@ -132,7 +136,7 @@
       .select("id, auth_user_id, full_name, email, role, departments(name)")
       .order("full_name", { ascending: true });
 
-    if (!options.includeAll && currentProfile.role !== "Executive") {
+    if (!options.includeAll && currentProfile.role === "Department Head") {
       query = query.eq("id", currentProfile.id);
     }
 

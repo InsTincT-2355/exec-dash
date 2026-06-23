@@ -49,6 +49,11 @@ module.exports = async function handler(req, res) {
       })
     });
 
+    const createdAuthUserId = authUser?.user?.id || authUser?.id;
+    if (!createdAuthUserId) {
+      throw new Error("Supabase admin user creation succeeded but returned no user id.");
+    }
+
     try {
       const insertedProfiles = await supabaseFetch("/rest/v1/profiles", {
         method: "POST",
@@ -56,7 +61,7 @@ module.exports = async function handler(req, res) {
           Prefer: "return=representation"
         },
         body: JSON.stringify([{
-          auth_user_id: authUser.user.id,
+          auth_user_id: createdAuthUserId,
           full_name: fullName,
           email,
           role,
@@ -69,7 +74,7 @@ module.exports = async function handler(req, res) {
         user: insertedProfiles[0]
       });
     } catch (error) {
-      await deleteAuthUser(authUser.user.id);
+      await deleteAuthUser(createdAuthUserId);
       throw error;
     }
   } catch (error) {

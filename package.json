@@ -1,11 +1,8 @@
 {
   "name": "exec-dashboard",
   "private": true,
-  "devDependencies": {
-    "wrangler": "^4.0.0"
-  },
   "scripts": {
-    "dev:static": "npx.cmd http-server . -p 4173",
-    "dev:cf": "npx.cmd wrangler pages dev . --port 4173"
+    "dev:local": "node local-server.cjs",
+    "dev:static": "npx.cmd http-server . -p 4173"
   }
 }

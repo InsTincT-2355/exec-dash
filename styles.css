@@ -26,6 +26,11 @@ body {
   color: var(--text);
 }
 
+.app-loading .app-shell,
+.app-loading .auth-shell {
+  visibility: hidden;
+}
+
 .auth-body {
   background: linear-gradient(135deg, #061634 0%, #0a2456 100%);
 }

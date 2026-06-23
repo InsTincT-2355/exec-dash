@@ -187,9 +187,6 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const { profile } = await getRequesterProfile(req);
-    assertExecutive(profile);
-
     const body = await parseJsonBody(req);
     const tasks = Array.isArray(body.tasks) ? body.tasks : [];
 
@@ -197,7 +194,18 @@ module.exports = async function handler(req, res) {
       return sendJson(res, 400, { error: "At least one task is required to generate a memo." });
     }
 
-    const memo = await callAiProvider(tasks, profile.full_name);
+    const bypassAuth = ["1", "true", "yes"].includes(String(process.env.LOCAL_DEV_BYPASS_AUTH || "").toLowerCase());
+    let requesterName = "Local Executive";
+
+    if (!bypassAuth) {
+      const { profile } = await getRequesterProfile(req);
+      assertExecutive(profile);
+      requesterName = profile.full_name;
+    } else if (body.requesterName || body.requester) {
+      requesterName = String(body.requesterName || body.requester).trim() || requesterName;
+    }
+
+    const memo = await callAiProvider(tasks, requesterName);
     return sendJson(res, 200, {
       memo,
       mode: (process.env.AI_API_KEY || process.env.GEMINI_API_KEY) ? "ai-provider" : "fallback"

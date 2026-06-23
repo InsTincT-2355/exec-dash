@@ -319,6 +319,49 @@ function appUsesSupabase() {
   return Boolean(window.SupabaseService?.isEnabled?.());
 }
 
+function purgeSupabaseAuthStorage() {
+  const matchesSupabaseAuthKey = (key) => {
+    if (!key) {
+      return false;
+    }
+
+    if (/^sb-[a-z0-9_-]+-auth-token$/i.test(key)) {
+      return true;
+    }
+
+    const lowered = key.toLowerCase();
+    return lowered.includes("auth-token") && lowered.includes("sb-");
+  };
+
+  const purgeStorage = (storage) => {
+    if (!storage) {
+      return;
+    }
+
+    const keysToRemove = [];
+    for (let index = 0; index < storage.length; index += 1) {
+      const key = storage.key(index);
+      if (matchesSupabaseAuthKey(key)) {
+        keysToRemove.push(key);
+      }
+    }
+
+    keysToRemove.forEach((key) => storage.removeItem(key));
+  };
+
+  try {
+    purgeStorage(window.localStorage);
+  } catch (error) {
+    console.error("Failed to purge Supabase auth data from localStorage", error);
+  }
+
+  try {
+    purgeStorage(window.sessionStorage);
+  } catch (error) {
+    console.error("Failed to purge Supabase auth data from sessionStorage", error);
+  }
+}
+
 async function getBootState() {
   return appUsesSupabase()
     ? window.SupabaseService.fetchBootState()
@@ -332,15 +375,24 @@ async function resetAppSession() {
     } catch (error) {
       console.error("Supabase sign-out during reset failed", error);
     }
+
+    purgeSupabaseAuthStorage();
   }
 
   clearSession();
 }
 
 async function hasAppSession() {
-  return appUsesSupabase()
-    ? window.SupabaseService.hasActiveSession()
-    : Boolean(getSession()?.userId);
+  if (!appUsesSupabase()) {
+    return Boolean(getSession()?.userId);
+  }
+
+  try {
+    return await window.SupabaseService.hasActiveSession();
+  } catch (error) {
+    console.error("Supabase session check failed", error);
+    return false;
+  }
 }
 
 function getInitialState() {
@@ -396,6 +448,10 @@ function clearSession() {
   localStorage.removeItem(SESSION_STORAGE_KEY);
 }
 
+function setAppReady() {
+  document.body.classList.remove("app-loading");
+}
+
 function getCurrentUser(state) {
   const session = appUsesSupabase() ? null : getSession();
   const currentUserId = state.currentUserId || session?.userId;
@@ -437,6 +493,10 @@ function isExecutiveUser(user) {
 
 function isAdminUser(user) {
   return user?.role === "Admin";
+}
+
+function canAccessExecutiveWorkspace(user) {
+  return isExecutiveUser(user) || isAdminUser(user);
 }
 
 function getRoleBadgeClass(role) {
@@ -543,6 +603,10 @@ function renderGlobalShell(state) {
 
   document.querySelectorAll(".js-admin-nav").forEach((element) => {
     element.style.display = isAdminUser(currentUser) ? "" : "none";
+  });
+
+  document.querySelectorAll(".js-executive-nav").forEach((element) => {
+    element.style.display = canAccessExecutiveWorkspace(currentUser) ? "" : "none";
   });
 
   document.querySelectorAll(".js-logout").forEach((button) => {
@@ -1482,6 +1546,8 @@ function renderAdminPage(state) {
     const config = getConfig();
     const endpoint = config.adminUserEndpoint || "";
     const accessToken = appUsesSupabase() ? await window.SupabaseService.getAccessToken() : "";
+    const submittedEmail = document.getElementById("adminEmail").value.trim().toLowerCase();
+    const submitButton = createUserForm.querySelector('button[type="submit"]');
 
     if (!endpoint) {
       createFeedback.textContent = "Admin user creation endpoint is not configured. Set `adminUserEndpoint` in `config.js` and deploy the `/functions/api/admin-users` route.";
@@ -1489,6 +1555,11 @@ function renderAdminPage(state) {
     }
 
     try {
+      createFeedback.textContent = "Creating user...";
+      if (submitButton) {
+        submitButton.disabled = true;
+      }
+
       const response = await fetch(endpoint, {
         method: "POST",
         headers: {
@@ -1509,12 +1580,22 @@ function renderAdminPage(state) {
         throw new Error(payload?.error || "User creation failed.");
       }
 
-      createFeedback.textContent = "User created successfully.";
+      createFeedback.textContent = `User created successfully for ${submittedEmail}. Refreshing the admin list...`;
       createUserForm.reset();
-      await loadAdminData();
+      try {
+        await loadAdminData();
+        createFeedback.textContent = `User created successfully for ${submittedEmail}.`;
+      } catch (refreshError) {
+        console.error("Admin data refresh failed after user creation", refreshError);
+        createFeedback.textContent = `User created successfully for ${submittedEmail}, but the admin list could not refresh: ${refreshError?.message || "Unknown refresh error."}`;
+      }
     } catch (error) {
       console.error(error);
       createFeedback.textContent = error.message || "User creation failed.";
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+      }
     }
   });
 
@@ -1542,6 +1623,7 @@ async function initApp() {
       }
     }
     renderLoginPage(state);
+    setAppReady();
     return;
   }
 
@@ -1554,6 +1636,18 @@ async function initApp() {
   const resolvedState = await getBootState();
   const sessionUserId = appUsesSupabase() ? resolvedState.currentUserId : localSession?.userId;
   const syncedState = syncCurrentUser(resolvedState, sessionUserId || resolvedState.currentUserId);
+  const currentUser = getCurrentUser(syncedState);
+
+  if (page === "executive" && !canAccessExecutiveWorkspace(currentUser)) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  if (page === "admin" && !isAdminUser(currentUser)) {
+    window.location.href = "index.html";
+    return;
+  }
+
   saveSession({
     userId: syncedState.currentUserId,
     loggedInAt: localSession?.loggedInAt || new Date().toISOString(),
@@ -1573,6 +1667,8 @@ async function initApp() {
   if (page === "admin") {
     renderAdminPage(syncedState);
   }
+
+  setAppReady();
 }
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -1583,6 +1679,7 @@ document.addEventListener("DOMContentLoaded", () => {
       if (loginFeedback) {
         loginFeedback.textContent = `App boot failed: ${error?.message || "Unknown initialization error."}`;
       }
+      setAppReady();
       return;
     }
 
