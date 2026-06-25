@@ -72,13 +72,26 @@
               </label>
             </div>
 
+            <section class="draft-section">
+              <div class="section-head-inline">
+                <div>
+                  <p class="eyebrow">Draft</p>
+                  <h4>Current Weekly Draft</h4>
+                </div>
+                <p class="helper-text draft-helper">Draft tasks are saved automatically after you add them.</p>
+              </div>
+              <div id="draftTaskList" class="draft-task-list"></div>
+            </section>
+
             <section class="task-section">
               <div class="section-head-inline">
                 <div>
                   <p class="eyebrow">Category 1</p>
                   <h4>Activities And Updates</h4>
                 </div>
-                <button type="button" class="button button-secondary add-item-button" data-category="activities">Add Activity</button>
+                <div class="section-actions">
+                  <button type="button" class="button button-secondary" data-add-to-draft="activities">Add</button>
+                </div>
               </div>
               <div id="activitiesContainer" class="task-list"></div>
             </section>
@@ -89,7 +102,9 @@
                   <p class="eyebrow">Category 2</p>
                   <h4>Next Week Priorities</h4>
                 </div>
-                <button type="button" class="button button-secondary add-item-button" data-category="priorities">Add Priority</button>
+                <div class="section-actions">
+                  <button type="button" class="button button-secondary" data-add-to-draft="priorities">Add</button>
+                </div>
               </div>
               <div id="prioritiesContainer" class="task-list"></div>
             </section>
@@ -100,7 +115,9 @@
                   <p class="eyebrow">Category 3</p>
                   <h4>Challenges And Risks</h4>
                 </div>
-                <button type="button" class="button button-secondary add-item-button" data-category="risks">Add Risk</button>
+                <div class="section-actions">
+                  <button type="button" class="button button-secondary" data-add-to-draft="risks">Add</button>
+                </div>
               </div>
               <div id="risksContainer" class="task-list"></div>
             </section>
@@ -116,13 +133,24 @@
           <div class="panel-header">
             <div>
               <p class="eyebrow">Preview</p>
-              <h3>Your Recent Submissions</h3>
+              <h3>Copy Tasks From Previous Reports</h3>
             </div>
           </div>
           <div id="submissionHistory" class="stack-list"></div>
         </div>
       </section>
     </main>
+  </div>
+
+  <div id="modalOverlay" class="modal-overlay" hidden>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <h3 id="modalTitle" class="modal-title"></h3>
+      <div id="modalBody" class="modal-body"></div>
+      <div class="modal-actions">
+        <button id="modalCancel" type="button" class="button button-secondary">Cancel</button>
+        <button id="modalConfirm" type="button" class="button">Confirm</button>
+      </div>
+    </div>
   </div>
 
   <script src="config.js"></script>

@@ -105,7 +105,7 @@ on weekly_updates for select
 to authenticated
 using (
   weekly_updates.profile_id = public.current_profile_id()
-  or public.current_profile_role() = 'Executive'
+  or public.current_profile_role() in ('Executive', 'Admin')
 );
 
 drop policy if exists "owners can insert weekly updates" on weekly_updates;
@@ -147,7 +147,7 @@ using (
     where weekly_updates.id = update_items.weekly_update_id
       and weekly_updates.profile_id = public.current_profile_id()
   )
-  or public.current_profile_role() = 'Executive'
+  or public.current_profile_role() in ('Executive', 'Admin')
 );
 
 drop policy if exists "owners can insert update items" on update_items;

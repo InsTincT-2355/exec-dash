@@ -782,35 +782,119 @@ function renderHomePage(state) {
   `).join("") || `<div class="empty-state">You have not submitted any tasks yet.</div>`;
 }
 
-function createTaskInputCard(category, index, task = { title: "", description: "" }) {
+function createStagingInputCard(category, index, task, canRemove) {
   return `
-    <article class="task-input-card" data-category="${category}" data-index="${index}">
+    <article class="task-input-card" data-staging-category="${category}" data-staging-index="${index}">
       <div class="task-card-header">
-        <strong>${CATEGORY_LABELS[category]} Item ${index + 1}</strong>
-        <button type="button" class="remove-button" data-remove-item="${category}">Remove</button>
+        <strong>${CATEGORY_LABELS[category]} Input ${index + 1}</strong>
+        <div class="task-card-header-actions">
+          ${canRemove ? `<button type="button" class="remove-button" data-remove-staging="${category}" data-remove-staging-index="${index}">Remove</button>` : ``}
+          <button type="button" class="icon-button compact" data-add-row-inline="${category}" data-add-row-after="${index}" aria-label="Add another input after this one">+</button>
+        </div>
       </div>
       <label class="field">
         <span>Title</span>
-        <input type="text" class="input-field" data-field="title" value="${task.title}">
+        <input type="text" class="input-field" data-staging-field="title" value="${task.title}">
       </label>
       <label class="field">
         <span>Description</span>
-        <textarea class="text-area" data-field="description">${task.description}</textarea>
+        <textarea class="text-area" data-staging-field="description">${task.description}</textarea>
       </label>
     </article>
   `;
 }
 
-function renderTaskInputs(category, items) {
+function renderStagingInputs(category, items) {
   const container = document.getElementById(`${category}Container`);
   if (!container) {
     return;
   }
 
-  container.innerHTML = items.map((item, index) => createTaskInputCard(category, index, item)).join("");
+  container.innerHTML = items
+    .map((item, index) => createStagingInputCard(category, index, item, items.length > 1))
+    .join("");
 }
 
-function renderSubmissionHistory(state) {
+function getSubmitDraftStorageKey(userId) {
+  return `submitDraft:v2:${userId}`;
+}
+
+function loadSubmitDraftState(userId) {
+  try {
+    const raw = localStorage.getItem(getSubmitDraftStorageKey(userId));
+    const parsed = raw ? JSON.parse(raw) : {};
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch (error) {
+    console.error("Failed to load submit draft", error);
+    return {};
+  }
+}
+
+function saveSubmitDraftState(userId, state) {
+  try {
+    localStorage.setItem(getSubmitDraftStorageKey(userId), JSON.stringify(state));
+  } catch (error) {
+    console.error("Failed to save submit draft", error);
+  }
+}
+
+function normalizeDraftItems(items) {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  return items
+    .filter(Boolean)
+    .map((item) => ({
+      id: String(item.id || generateId("draft")),
+      category: String(item.category || ""),
+      title: String(item.title || ""),
+      description: String(item.description || "")
+    }))
+    .filter((item) => ["activities", "priorities", "risks"].includes(item.category));
+}
+
+function renderDraftTaskList(draftItems) {
+  const container = document.getElementById("draftTaskList");
+  if (!container) {
+    return;
+  }
+
+  if (!draftItems.length) {
+    container.innerHTML = `<div class="empty-state">No draft tasks yet. Add tasks using the “Add To Draft” buttons.</div>`;
+    return;
+  }
+
+  const grouped = draftItems.reduce((accumulator, item) => {
+    if (!accumulator[item.category]) {
+      accumulator[item.category] = [];
+    }
+    accumulator[item.category].push(item);
+    return accumulator;
+  }, {});
+
+  container.innerHTML = ["activities", "priorities", "risks"]
+    .filter((category) => grouped[category]?.length)
+    .map((category) => `
+      <section class="draft-group">
+        <h5>${CATEGORY_LABELS[category]}</h5>
+        ${grouped[category].map((item) => `
+          <article class="draft-item" data-draft-id="${item.id}">
+            <div class="draft-item-header">
+              <p class="draft-item-title">${item.title}</p>
+              <div class="draft-item-actions">
+                <button type="button" class="inline-link" data-edit-draft="${item.id}">Edit</button>
+                <button type="button" class="inline-link danger" data-delete-draft="${item.id}">Delete</button>
+              </div>
+            </div>
+            <p class="draft-item-meta">${item.description || "No description provided."}</p>
+          </article>
+        `).join("")}
+      </section>
+    `).join("");
+}
+
+function renderSubmissionHistory(state, onCopyItems) {
   const historyContainer = document.getElementById("submissionHistory");
   if (!historyContainer) {
     return;
@@ -827,16 +911,74 @@ function renderSubmissionHistory(state) {
   }
 
   historyContainer.innerHTML = submissions.map((submission) => `
-    <article class="history-card">
-      <h4>Week ending ${formatPrettyDate(submission.weekEnding)}</h4>
-      <p class="list-meta">${submission.items.length} total items submitted</p>
-      <div class="tag-row">
-        <span class="tag activities">${categoryCount(submission.items, "activities")} activities</span>
-        <span class="tag priorities">${categoryCount(submission.items, "priorities")} priorities</span>
-        <span class="tag risks">${categoryCount(submission.items, "risks")} risks</span>
+    <article class="history-accordion" data-submission-id="${submission.id}">
+      <button type="button" class="history-header" data-toggle-history="${submission.id}">
+        <h4>Week ending ${formatPrettyDate(submission.weekEnding)}</h4>
+        <p class="list-meta">${submission.items.length} items · ${categoryCount(submission.items, "activities")} activities · ${categoryCount(submission.items, "priorities")} priorities · ${categoryCount(submission.items, "risks")} risks</p>
+      </button>
+      <div class="history-body" data-history-body="${submission.id}" hidden>
+        <div class="history-copy-actions">
+          <button type="button" class="button button-secondary" data-copy-all="${submission.id}">Copy All</button>
+          <button type="button" class="button" data-copy-selected="${submission.id}">Copy Selected</button>
+        </div>
+        <div class="history-items">
+          ${submission.items.map((item, index) => `
+            <div class="history-item-row">
+              <label>
+                <input type="checkbox" data-copy-checkbox="${submission.id}" data-copy-index="${index}">
+                <div>
+                  <p class="history-item-title">${item.title}</p>
+                  <p class="history-item-meta">${CATEGORY_LABELS[item.category]}</p>
+                </div>
+              </label>
+            </div>
+          `).join("")}
+        </div>
       </div>
     </article>
   `).join("");
+
+  const submissionById = submissions.reduce((accumulator, submission) => {
+    accumulator[submission.id] = submission;
+    return accumulator;
+  }, {});
+
+  historyContainer.querySelectorAll("[data-toggle-history]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const id = button.dataset.toggleHistory;
+      const body = historyContainer.querySelector(`[data-history-body="${id}"]`);
+      if (body) {
+        body.hidden = !body.hidden;
+      }
+    });
+  });
+
+  const copyItems = (submissionId, mode) => {
+    const submission = submissionById[submissionId];
+    if (!submission) {
+      return;
+    }
+
+    if (mode === "all") {
+      onCopyItems?.(submission.items);
+      return;
+    }
+
+    const selected = Array.from(historyContainer.querySelectorAll(`[data-copy-checkbox="${submissionId}"]`))
+      .filter((checkbox) => checkbox.checked)
+      .map((checkbox) => submission.items[Number(checkbox.dataset.copyIndex)])
+      .filter(Boolean);
+
+    onCopyItems?.(selected);
+  };
+
+  historyContainer.querySelectorAll("[data-copy-all]").forEach((button) => {
+    button.addEventListener("click", () => copyItems(button.dataset.copyAll, "all"));
+  });
+
+  historyContainer.querySelectorAll("[data-copy-selected]").forEach((button) => {
+    button.addEventListener("click", () => copyItems(button.dataset.copySelected, "selected"));
+  });
 }
 
 function renderSubmitPage(state) {
@@ -846,7 +988,7 @@ function renderSubmitPage(state) {
   }
 
   const currentUser = getCurrentUser(state);
-  const draft = {
+  const staging = {
     activities: [{ title: "", description: "" }],
     priorities: [{ title: "", description: "" }],
     risks: [{ title: "", description: "" }]
@@ -856,103 +998,329 @@ function renderSubmitPage(state) {
   const departmentName = document.getElementById("departmentName");
   const weekEnding = document.getElementById("weekEnding");
   const feedback = document.getElementById("formFeedback");
+  const modalOverlay = document.getElementById("modalOverlay");
+  const modalTitle = document.getElementById("modalTitle");
+  const modalBody = document.getElementById("modalBody");
+  const modalCancel = document.getElementById("modalCancel");
+  const modalConfirm = document.getElementById("modalConfirm");
 
   headName.value = currentUser.name;
   departmentName.value = currentUser.department;
   weekEnding.value = getNextThursdayDateString();
 
-  function rerenderAllInputs() {
-    Object.keys(draft).forEach((category) => {
-      renderTaskInputs(category, draft[category]);
-    });
-    attachTaskInputListeners();
+  let modalConfirmHandler = null;
+
+  function closeModal() {
+    if (!modalOverlay) {
+      return;
+    }
+    modalOverlay.hidden = true;
+    modalConfirmHandler = null;
+    if (modalTitle) {
+      modalTitle.textContent = "";
+    }
+    if (modalBody) {
+      modalBody.innerHTML = "";
+    }
   }
 
-  function attachTaskInputListeners() {
-    document.querySelectorAll(".task-input-card").forEach((card) => {
-      const category = card.dataset.category;
-      const index = Number(card.dataset.index);
+  function openModal({ title, confirmLabel, bodyHtml, onConfirm }) {
+    if (!modalOverlay || !modalTitle || !modalBody || !modalCancel || !modalConfirm) {
+      return;
+    }
 
-      card.querySelectorAll("[data-field]").forEach((field) => {
+    modalTitle.textContent = title;
+    modalBody.innerHTML = bodyHtml;
+    modalConfirm.textContent = confirmLabel;
+    modalConfirmHandler = onConfirm;
+    modalOverlay.hidden = false;
+
+    const firstInput = modalBody.querySelector("input, textarea, select, button");
+    firstInput?.focus?.();
+  }
+
+  if (modalOverlay && modalCancel && modalConfirm) {
+    modalCancel.addEventListener("click", closeModal);
+    modalOverlay.addEventListener("click", (event) => {
+      if (event.target === modalOverlay) {
+        closeModal();
+      }
+    });
+    modalConfirm.addEventListener("click", async () => {
+      const handler = modalConfirmHandler;
+      if (!handler) {
+        closeModal();
+        return;
+      }
+      await handler();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !modalOverlay.hidden) {
+        closeModal();
+      }
+    });
+  }
+
+  const draftState = loadSubmitDraftState(currentUser.id);
+  let draftItems = [];
+
+  function getWeekKey() {
+    return String(weekEnding.value || getNextThursdayDateString());
+  }
+
+  function loadDraftForWeek(weekKey) {
+    draftItems = normalizeDraftItems(draftState[weekKey]?.items || []);
+    renderDraftTaskList(draftItems);
+    attachDraftListeners();
+  }
+
+  function saveDraftForWeek(weekKey) {
+    draftState[weekKey] = {
+      updatedAt: new Date().toISOString(),
+      items: draftItems
+    };
+    saveSubmitDraftState(currentUser.id, draftState);
+  }
+
+  function attachStagingListeners() {
+    document.querySelectorAll(".task-input-card").forEach((card) => {
+      const category = card.dataset.stagingCategory;
+      const index = Number(card.dataset.stagingIndex);
+
+      card.querySelectorAll("[data-staging-field]").forEach((field) => {
         field.addEventListener("input", (event) => {
-          draft[category][index][event.target.dataset.field] = event.target.value;
+          staging[category][index][event.target.dataset.stagingField] = event.target.value;
         });
       });
     });
 
-    document.querySelectorAll("[data-remove-item]").forEach((button) => {
+    document.querySelectorAll("[data-remove-staging]").forEach((button) => {
       button.addEventListener("click", () => {
-        const category = button.dataset.removeItem;
-        if (draft[category].length === 1) {
-          draft[category][0] = { title: "", description: "" };
-        } else {
-          const card = button.closest(".task-input-card");
-          const index = Number(card.dataset.index);
-          draft[category].splice(index, 1);
+        const category = button.dataset.removeStaging;
+        const index = Number(button.dataset.removeStagingIndex);
+        staging[category].splice(index, 1);
+        if (!staging[category].length) {
+          staging[category] = [{ title: "", description: "" }];
         }
-        rerenderAllInputs();
+        rerenderStaging();
+      });
+    });
+
+    document.querySelectorAll("[data-add-row-inline]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const category = button.dataset.addRowInline;
+        const index = Number(button.dataset.addRowAfter);
+        staging[category].splice(index + 1, 0, { title: "", description: "" });
+        rerenderStaging();
+      });
+    });
+
+    document.querySelectorAll("[data-add-to-draft]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const category = button.dataset.addToDraft;
+        const incoming = staging[category]
+          .filter((row) => row.title.trim() || row.description.trim())
+          .map((row) => ({
+            id: generateId("draft"),
+            category,
+            title: row.title.trim() || "Untitled item",
+            description: row.description.trim()
+          }));
+
+        if (!incoming.length) {
+          feedback.textContent = `Add at least one ${CATEGORY_LABELS[category]} item before adding to draft.`;
+          return;
+        }
+
+        draftItems = draftItems.concat(incoming);
+        saveDraftForWeek(getWeekKey());
+        staging[category] = [{ title: "", description: "" }];
+        feedback.textContent = `${incoming.length} item(s) added to the draft.`;
+        renderDraftTaskList(draftItems);
+        attachDraftListeners();
+        rerenderStaging();
       });
     });
   }
 
-  document.querySelectorAll(".add-item-button").forEach((button) => {
-    button.addEventListener("click", () => {
-      const category = button.dataset.category;
-      draft[category].push({ title: "", description: "" });
-      rerenderAllInputs();
+  function attachDraftListeners() {
+    document.querySelectorAll("[data-edit-draft]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const id = button.dataset.editDraft;
+        const item = draftItems.find((entry) => entry.id === id);
+        if (!item) {
+          return;
+        }
+        openModal({
+          title: "Edit draft task",
+          confirmLabel: "Save",
+          bodyHtml: `
+            <label class="field">
+              <span>Title</span>
+              <input id="modalDraftTitle" type="text" class="input-field" value="${item.title}">
+            </label>
+            <label class="field">
+              <span>Description</span>
+              <textarea id="modalDraftDescription" class="text-area">${item.description || ""}</textarea>
+            </label>
+          `,
+          onConfirm: async () => {
+            const nextTitle = document.getElementById("modalDraftTitle")?.value ?? "";
+            const nextDescription = document.getElementById("modalDraftDescription")?.value ?? "";
+            item.title = String(nextTitle || "").trim() || "Untitled item";
+            item.description = String(nextDescription || "").trim();
+            saveDraftForWeek(getWeekKey());
+            renderDraftTaskList(draftItems);
+            attachDraftListeners();
+            closeModal();
+          }
+        });
+      });
     });
-  });
+
+    document.querySelectorAll("[data-delete-draft]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const id = button.dataset.deleteDraft;
+        const item = draftItems.find((entry) => entry.id === id);
+        if (!item) {
+          return;
+        }
+        openModal({
+          title: "Delete draft task?",
+          confirmLabel: "Delete",
+          bodyHtml: `<p class="helper-text">This removes “${item.title}” from your draft.</p>`,
+          onConfirm: async () => {
+            draftItems = draftItems.filter((entry) => entry.id !== id);
+            saveDraftForWeek(getWeekKey());
+            renderDraftTaskList(draftItems);
+            attachDraftListeners();
+            closeModal();
+          }
+        });
+      });
+    });
+  }
+
+  function rerenderStaging() {
+    Object.keys(staging).forEach((category) => {
+      renderStagingInputs(category, staging[category]);
+    });
+    attachStagingListeners();
+  }
+
+  function handleCopyFromHistory(itemsToCopy) {
+    if (!itemsToCopy?.length) {
+      feedback.textContent = "Select at least one task to copy.";
+      return;
+    }
+
+    const incoming = itemsToCopy.map((item) => ({
+      id: generateId("draft"),
+      category: String(item.category || ""),
+      title: String(item.title || "").trim() || "Untitled item",
+      description: String(item.description || "").trim()
+    })).filter((item) => ["activities", "priorities", "risks"].includes(item.category));
+
+    const existingFingerprints = new Set(draftItems.map((item) => `${item.category}::${item.title}::${item.description}`));
+    const toAdd = incoming.filter((item) => !existingFingerprints.has(`${item.category}::${item.title}::${item.description}`));
+
+    if (!toAdd.length) {
+      feedback.textContent = "All selected tasks are already in your draft.";
+      return;
+    }
+
+    draftItems = draftItems.concat(toAdd);
+    saveDraftForWeek(getWeekKey());
+    renderDraftTaskList(draftItems);
+    attachDraftListeners();
+    feedback.textContent = `${toAdd.length} task(s) copied into your draft.`;
+  }
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const items = Object.entries(draft).flatMap(([category, rows]) => rows
-      .filter((row) => row.title.trim() || row.description.trim())
-      .map((row) => ({
-        id: generateId("item"),
-        category,
-        title: row.title.trim() || "Untitled item",
-        description: row.description.trim() || "No description provided."
-      })));
+    const items = draftItems.map((item) => ({
+      id: generateId("item"),
+      category: item.category,
+      title: String(item.title || "").trim() || "Untitled item",
+      description: String(item.description || "").trim() || "No description provided."
+    }));
 
     if (!items.length) {
       feedback.textContent = "Add at least one task item before submitting.";
       return;
     }
 
-    try {
-      let nextState;
+    openModal({
+      title: "Submit weekly update?",
+      confirmLabel: "Submit",
+      bodyHtml: `
+        <p class="helper-text">You are about to submit ${items.length} task(s) for week ending ${formatPrettyDate(weekEnding.value)}.</p>
+        <div class="draft-task-list">
+          ${["activities", "priorities", "risks"].map((category) => {
+            const titles = items.filter((item) => item.category === category).map((item) => item.title);
+            if (!titles.length) {
+              return "";
+            }
+            return `
+              <section class="draft-group">
+                <h5>${CATEGORY_LABELS[category]}</h5>
+                ${titles.map((title) => `<div class="draft-item"><p class="draft-item-title">${title}</p></div>`).join("")}
+              </section>
+            `;
+          }).join("")}
+        </div>
+      `,
+      onConfirm: async () => {
+        try {
+          let nextState;
 
-      if (appUsesSupabase()) {
-        await window.SupabaseService.submitWeeklyUpdate(currentUser.id, weekEnding.value, items);
-        nextState = await getBootState();
-      } else {
-        nextState = loadState();
-        nextState.submissions.unshift({
-          id: generateId("submission"),
-          userId: currentUser.id,
-          weekEnding: weekEnding.value,
-          createdAt: new Date().toISOString(),
-          items
-        });
-        saveState(nextState);
+          if (appUsesSupabase()) {
+            await window.SupabaseService.submitWeeklyUpdate(currentUser.id, weekEnding.value, items);
+            nextState = await getBootState();
+          } else {
+            nextState = loadState();
+            nextState.submissions.unshift({
+              id: generateId("submission"),
+              userId: currentUser.id,
+              weekEnding: weekEnding.value,
+              createdAt: new Date().toISOString(),
+              items
+            });
+            saveState(nextState);
+          }
+
+          feedback.textContent = "Weekly update submitted successfully.";
+
+          const weekKey = getWeekKey();
+          draftItems = [];
+          saveDraftForWeek(weekKey);
+
+          Object.keys(staging).forEach((category) => {
+            staging[category] = [{ title: "", description: "" }];
+          });
+
+          renderDraftTaskList(draftItems);
+          attachDraftListeners();
+          rerenderStaging();
+          renderSubmissionHistory(nextState, handleCopyFromHistory);
+          closeModal();
+        } catch (error) {
+          console.error(error);
+          feedback.textContent = "Submission failed. Please check your connection and Supabase configuration.";
+          closeModal();
+        }
       }
-
-      feedback.textContent = "Weekly update submitted successfully.";
-
-      Object.keys(draft).forEach((category) => {
-        draft[category] = [{ title: "", description: "" }];
-      });
-      rerenderAllInputs();
-      renderSubmissionHistory(nextState);
-    } catch (error) {
-      console.error(error);
-      feedback.textContent = "Submission failed. Please check your connection and Supabase configuration.";
-    }
+    });
   });
 
-  rerenderAllInputs();
-  renderSubmissionHistory(state);
+  weekEnding.addEventListener("change", () => {
+    loadDraftForWeek(getWeekKey());
+  });
+
+  loadDraftForWeek(getWeekKey());
+  rerenderStaging();
+  renderSubmissionHistory(state, handleCopyFromHistory);
 }
 
 function getUniqueDepartments(state) {

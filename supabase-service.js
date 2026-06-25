@@ -169,7 +169,7 @@
       .order("week_ending", { ascending: false })
       .order("created_at", { ascending: false });
 
-    if (currentProfile.role !== "Executive") {
+    if (currentProfile.role === "Department Head") {
       query = query.eq("profile_id", currentProfile.id);
     }
 
