@@ -1554,7 +1554,12 @@ async function generateMemo(selectedTasks, currentUser, onStatus) {
         })
       });
 
-      const payload = await response.json();
+      let payload = null;
+      try {
+        payload = await response.json();
+      } catch {
+        payload = null;
+      }
       if (!response.ok) {
         throw new Error(payload?.error || "Local AI request failed");
       }
@@ -1591,7 +1596,12 @@ async function generateMemo(selectedTasks, currentUser, onStatus) {
       })
     });
 
-    const payload = await response.json();
+    let payload = null;
+    try {
+      payload = await response.json();
+    } catch {
+      payload = null;
+    }
     if (!response.ok) {
       throw new Error(payload?.error || "Memo generation failed");
     }
@@ -1943,7 +1953,12 @@ function renderAdminPage(state) {
         })
       });
 
-      const payload = await response.json();
+      let payload = null;
+      try {
+        payload = await response.json();
+      } catch {
+        payload = null;
+      }
       if (!response.ok) {
         throw new Error(payload?.error || "User creation failed.");
       }
