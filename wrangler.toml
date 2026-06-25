@@ -7,18 +7,3 @@ enabled = true
 
 [assets]
 directory = "."
-exclude = [
-  ".env",
-  ".env.*",
-  ".git/**",
-  ".github/**",
-  ".vscode/**",
-  ".vercel/**",
-  ".wrangler/**",
-  "coverage/**",
-  "dist/**",
-  "node_modules/**",
-  "*.log",
-  "Thumbs.db",
-  "Desktop.ini"
-]
