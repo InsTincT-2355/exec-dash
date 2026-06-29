@@ -1623,6 +1623,18 @@ function renderLoginPage(state) {
   const loginEmail = document.getElementById("loginEmail");
   const loginPassword = document.getElementById("loginPassword");
 
+  async function completeSupabaseLogin() {
+    const bootState = await getBootState();
+
+    saveSession({
+      userId: bootState.currentUserId,
+      loggedInAt: new Date().toISOString(),
+      mode: "supabase"
+    });
+    loginFeedback.textContent = "Welcome back. Redirecting...";
+    window.location.href = "index.html";
+  }
+
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
     const email = loginEmail.value.trim().toLowerCase();
@@ -1631,15 +1643,7 @@ function renderLoginPage(state) {
     try {
       if (appUsesSupabase()) {
         await window.SupabaseService.signIn(email, password);
-        const bootState = await getBootState();
-
-        saveSession({
-          userId: bootState.currentUserId,
-          loggedInAt: new Date().toISOString(),
-          mode: "supabase"
-        });
-        loginFeedback.textContent = "Welcome back. Redirecting...";
-        window.location.href = "index.html";
+        await completeSupabaseLogin();
         return;
       }
 
